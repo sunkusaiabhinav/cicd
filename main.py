@@ -43,7 +43,7 @@ app.include_router(router)
 
 
 # -----------------------------------------------------------------------
-# Root endpoint
+# Root endpoint(abhi)
 # -----------------------------------------------------------------------
 @app.get("/", summary="Root", description="API welcome message and links to docs.")
 def root() -> dict[str, str]:
