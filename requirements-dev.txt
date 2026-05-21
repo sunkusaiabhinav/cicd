@@ -1,0 +1,20 @@
+# Dev / CI dependencies — used locally and in GitHub Actions
+# Install with: pip install -r requirements-dev.txt
+
+# Testing
+pytest>=8.0.0           # Test runner
+pytest-cov>=5.0.0       # Coverage reporting plugin for pytest
+httpx>=0.27.0           # Required by FastAPI's TestClient
+
+# Code quality
+black>=24.0.0           # Code formatter (enforces consistent style)
+isort>=5.13.0           # Import sorter (groups and orders imports)
+flake8>=7.0.0           # Linter (checks style and potential errors)
+mypy>=1.9.0             # Static type checker
+
+# Security
+bandit>=1.7.0           # Security vulnerability scanner for source code
+pip-audit>=2.7.0        # Scans installed packages for known CVEs
+
+# Runtime deps (also needed for type stubs)
+-r requirements.txt

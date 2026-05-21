@@ -1,0 +1,27 @@
+# =============================================================
+# FILE: .bandit
+# PURPOSE: Configuration for Bandit — the Python security scanner.
+#
+# WHAT IS BANDIT?
+#   Bandit scans your Python source code for common security issues
+#   such as hardcoded passwords, use of weak cryptography, SQL injection
+#   risks, and other OWASP-style vulnerabilities.
+#
+# HOW TO RUN:
+#   bandit -r app/ -c .bandit
+#
+# CONFIG FORMAT:
+#   This file is TOML/INI-style. We use it to:
+#     - Skip directories that don't need scanning (tests have assert statements
+#       which Bandit flags as low-severity issues — harmless in tests)
+#     - Set severity and confidence thresholds
+# =============================================================
+
+[bandit]
+# Directories to exclude from scanning
+# Tests use assert statements which Bandit warns about (B101) — safe to skip
+exclude_dirs = ["tests", ".venv", "dist", "build"]
+
+# Skip specific check IDs:
+#   B101 = assert_used — assert is fine in tests (already excluded above)
+skips = ["B101"]

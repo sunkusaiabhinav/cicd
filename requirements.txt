@@ -1,0 +1,12 @@
+# Runtime dependencies — installed in production and CI
+# These are the only packages needed to RUN the application
+
+# FastAPI: the web framework
+fastapi>=0.110.0
+
+# uvicorn: ASGI server that runs the FastAPI app
+# [standard] installs extras like watchfiles (for --reload) and httptools
+uvicorn[standard]>=0.29.0
+
+# Pydantic: data validation library used by FastAPI for request/response schemas
+pydantic>=2.6.0

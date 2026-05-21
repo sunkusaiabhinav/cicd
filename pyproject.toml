@@ -1,0 +1,44 @@
+# =============================================================
+# FILE: pyproject.toml
+# PURPOSE: Project metadata and Black formatter configuration.
+#
+# WHY pyproject.toml?
+#   PEP 517/518 standardized this file as the modern place to put:
+#     1. Build system configuration (how to package the project)
+#     2. Tool-specific config (Black, pytest, etc.)
+#   It replaces the older setup.py + setup.cfg approach.
+# =============================================================
+
+[build-system]
+# setuptools is the standard Python build backend
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fastapi-task-manager"
+version = "1.0.0"
+description = "A simple FastAPI Task Manager REST API"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+# =============================================================
+# BLACK — Code formatter
+# Docs: https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html
+# Run: black --check app/ tests/ main.py
+# Fix: black app/ tests/ main.py
+# =============================================================
+[tool.black]
+# Line length — 88 is Black's default
+line-length = 88
+# Target Python versions for syntax compatibility
+target-version = ["py311"]
+# Files/dirs to exclude from formatting
+exclude = '''
+/(
+    \.venv
+  | dist
+  | build
+  | \.git
+)/
+'''
