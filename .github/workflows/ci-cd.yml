@@ -21,7 +21,7 @@ concurrency:
 env:
   PY_VERSION: "3.11"
   DOCKER_REGISTRY: docker.io
-  APP_IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/fastapi-service
+  APP_IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/cicd
 
 jobs:
 
