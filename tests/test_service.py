@@ -19,7 +19,6 @@ import pytest
 from app.models import TaskCreate, TaskUpdate
 from app.service import TaskNotFoundError, TaskService
 
-
 # -----------------------------------------------------------------------
 # FIXTURES
 # -----------------------------------------------------------------------
@@ -41,7 +40,9 @@ def service_with_task(service: TaskService) -> tuple[TaskService, int]:
     Returns a service that already has one task, plus its ID.
     Used by tests that need to test operations on an existing task.
     """
-    payload = TaskCreate(title="Existing Task", description="Pre-created", completed=False)
+    payload = TaskCreate(
+        title="Existing Task", description="Pre-created", completed=False
+    )
     task = service.create_task(payload)
     return service, task.id
 

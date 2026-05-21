@@ -205,18 +205,14 @@ class TestUpdateTask:
     def test_update_title_returns_200(self, client: TestClient) -> None:
         """Updating a task's title should return 200 with updated data."""
         created = client.post("/tasks", json={"title": "Old Title"}).json()
-        response = client.put(
-            f"/tasks/{created['id']}", json={"title": "New Title"}
-        )
+        response = client.put(f"/tasks/{created['id']}", json={"title": "New Title"})
         assert response.status_code == 200
         assert response.json()["title"] == "New Title"
 
     def test_update_completed_flag(self, client: TestClient) -> None:
         """Marking a task as completed should change the completed field."""
         created = client.post("/tasks", json={"title": "Do this"}).json()
-        response = client.put(
-            f"/tasks/{created['id']}", json={"completed": True}
-        )
+        response = client.put(f"/tasks/{created['id']}", json={"completed": True})
         assert response.json()["completed"] is True
 
     def test_update_partial_keeps_other_fields(self, client: TestClient) -> None:
