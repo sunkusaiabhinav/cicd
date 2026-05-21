@@ -103,11 +103,16 @@ class TaskService:
         task_id = self._next_id
         self._next_id += 1  # Increment for the next task
 
+        # Capture a single timestamp so created_at and updated_at are identical
+        now = datetime.now(timezone.utc)
+
         record = TaskRecord(
             id=task_id,
             title=data.title,
             description=data.description,
             completed=data.completed,
+            created_at=now,
+            updated_at=now,
         )
         self._tasks[task_id] = record
         return record.to_response()
