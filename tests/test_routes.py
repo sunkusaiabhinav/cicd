@@ -23,7 +23,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 # We import the FastAPI app and the service to reset state between tests
-from app.service import TaskService, task_service
+from app.service import task_service
 from main import app
 
 
