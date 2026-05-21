@@ -76,6 +76,47 @@ jobs:
         run: pip-audit -r requirements.txt
 
   # ============================================================
+  # TRIVY FILESYSTEM SCAN
+  # Runs in parallel with validation — scans source code and
+  # Python packages for known CVEs BEFORE the Docker build.
+  # Results are uploaded to the GitHub Security tab as SARIF.
+  # continue-on-error: true means this is informational only.
+  # ============================================================
+  trivy-fs-scan:
+    name: Trivy Filesystem Scan
+    runs-on: ubuntu-latest
+    # Runs independently — no need to wait for other jobs
+    continue-on-error: true
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v4
+
+      # Trivy scans the checked-out filesystem for:
+      #   - Vulnerable Python packages (from requirements.txt)
+      #   - Misconfigurations in Dockerfile, YAML files, etc.
+      - name: Run Trivy Filesystem Vulnerability Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          # Report format: SARIF integrates with GitHub Security tab
+          format: sarif
+          output: trivy-fs-results.sarif
+          # Only flag MEDIUM, HIGH, CRITICAL vulnerabilities
+          severity: MEDIUM,HIGH,CRITICAL
+          # Scan Python packages and config files
+          scanners: vuln,misconfig
+
+      # Upload SARIF so results appear in GitHub → Security → Code scanning
+      - name: Upload Trivy FS Results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs-results.sarif
+          category: trivy-filesystem
+
+  # ============================================================
   # TESTING STAGE
   # ============================================================
   testing:
@@ -108,7 +149,7 @@ jobs:
             --cov-report=xml \
             -v
 
-      # Store coverage report
+      # Store coverage report — SonarCloud job will download this
       - name: Save Coverage Artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -116,6 +157,48 @@ jobs:
           name: coverage-results
           path: coverage.xml
           retention-days: 7
+
+  # ============================================================
+  # SONARCLOUD CODE QUALITY ANALYSIS
+  # Runs after testing so it can use the coverage.xml report.
+  # Analyzes: bugs, code smells, duplications, security hotspots.
+  # continue-on-error: true — won't block Docker build if it fails.
+  #
+  # SETUP REQUIRED:
+  #   Add secret SONAR_TOKEN to GitHub repo settings.
+  #   Get it from: sonarcloud.io → My Account → Security
+  # ============================================================
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: testing
+    # Won't block the Docker pipeline if SonarCloud is unavailable
+    continue-on-error: true
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v4
+        with:
+          # fetch-depth=0 gives SonarCloud full git history for
+          # accurate blame annotations and new-code detection
+          fetch-depth: 0
+
+      # Download the coverage.xml produced by the testing job
+      # SonarCloud uses it to display per-line coverage on the dashboard
+      - name: Download Coverage Report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-results
+
+      # Run SonarCloud analysis using sonar-project.properties for config
+      - name: Run SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          # GitHub token for PR decoration (auto-provided by Actions)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Your SonarCloud authentication token
+          # Add this secret: sonarcloud.io → My Account → Security → Generate Token
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # ============================================================
   # VERIFY REQUIRED SECRETS
@@ -195,3 +278,43 @@ jobs:
           labels: ${{ steps.docker_meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ============================================================
+  # TRIVY DOCKER IMAGE SCAN
+  # Runs after the Docker image is built and pushed.
+  # Scans the published image for OS-level and library CVEs.
+  # Fails the pipeline if HIGH or CRITICAL vulnerabilities are found.
+  # Results also appear in GitHub Security tab.
+  # ============================================================
+  trivy-image-scan:
+    name: Trivy Image Vulnerability Scan
+    runs-on: ubuntu-latest
+    needs: containerize
+    # Only run if the Docker build actually happened
+    if: needs.containerize.result == 'success'
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v4
+
+      # Pull and scan the Docker image that was just published.
+      # Uses the 'stable' tag applied to main branch pushes.
+      - name: Run Trivy Image Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: image
+          # Scans the image that was just pushed to Docker Hub
+          image-ref: ${{ env.APP_IMAGE }}:stable
+          format: sarif
+          output: trivy-image-results.sarif
+          # Exit with error code 1 if HIGH or CRITICAL CVEs are found
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+      # Upload results to GitHub Security tab regardless of pass/fail
+      - name: Upload Trivy Image Results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-image-results.sarif
+          category: trivy-docker-image
